@@ -2,6 +2,9 @@
 #include <thread>
 #include <filesystem>
 #include <sys/stat.h>
+#include "mouse.h"
+#include <chrono>
+
 
 namespace fs = std::filesystem;
 
@@ -40,8 +43,13 @@ int main()
     std::thread * thPtr = NULL;
     Player * currTrackPtr = NULL;
 
+    mouse_initialise();
+
     while(1)
     {	
+        
+	int clicks = mouse_process_events();
+
         if ( nextFile >= 0 )
 	{
             char temp[3] = {};
@@ -78,5 +86,25 @@ int main()
 	}
 	else
             nextFile = findNextFile( 0 );
+
+	if ( ( clicks == 1 ) && ( thPtr != NULL ) && ( currTrackPtr != NULL) &&
+	     currTrackPtr->isTrackRunning() )
+	{
+	    cout << "EMC PLAYER => Skipping track." << endl;
+            string s="pkill -f ffmpeg; pkill -f pacat;";
+	    system(s.c_str());
+	    thPtr->detach();
+	    delete(thPtr);
+	    delete(currTrackPtr);
+	    thPtr = NULL;
+	    currTrackPtr = NULL;
+	}
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
     }
+
+    mouse_cleanup();
+
 }
+
