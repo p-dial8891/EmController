@@ -1,0 +1,8 @@
+e-Paper/
+library/
+music/
+playlist/
+*.o
+*.a
+*.out
+
