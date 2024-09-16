@@ -8,7 +8,36 @@
 
 namespace fs = std::filesystem;
 
-int findNextFile( int start )
+static int findNextSlot( int start )
+{
+    int fnCount = -1;
+    struct stat buffer;
+    char temp[3] = {};
+
+    for ( fnCount = ( start + 1 ) % 16 ; 
+          fnCount != start ; 
+	  fnCount =  ( ( fnCount + 1 ) % 16 ) )
+    {
+	sprintf(temp, "%02d", fnCount);
+	if ( stat(temp, &buffer) != 0 )
+        {
+	   //cout << "EMC PLAYER => Next slot found : " << fnCount << endl;
+           return fnCount;
+	}
+    }
+
+    sprintf(temp, "%02d", fnCount);
+    if ( stat(temp, &buffer) != 0 )
+    {
+        //cout << "EMC PLAYER => Next slot found : " << fnCount << endl;
+        return fnCount;
+    }
+
+    return -1;
+}
+
+
+static int findNextFile( int start )
 {
     int fnCount = -1;
     struct stat buffer;
@@ -36,9 +65,52 @@ int findNextFile( int start )
     return -1;
 }
 
+static void selectRandomTrack( int currFile )
+{
+    int trackCount = 0;
+    int index = 0;
+    int randNum = 0;
+    string selection = "";
+
+    for (const fs::directory_entry& dir_entry :
+            fs::recursive_directory_iterator("../music"))
+    {
+        trackCount += 1;
+    }
+
+    if ( trackCount != 0 )
+        randNum = rand()%(trackCount - 1);
+    else
+	randNum = 0;
+
+    for (const fs::directory_entry& dir_entry :
+            fs::recursive_directory_iterator("../music"))
+    {
+        if ( !dir_entry.is_directory() && index >= randNum )
+	{
+            selection = dir_entry.path().string();
+	    break;
+	}
+	index++;
+    }
+
+    int nextSlot = findNextSlot ( currFile );
+
+    if ( ( currFile >= 0 ) && ( selection != "" ) && ( nextSlot != -1 ) )
+    {
+        cout << "EMC PLAYER => Next track selected : " << selection << endl;
+        string cmd = ( "ln -s \"" + selection + "\" " + std::to_string(nextSlot) );
+	system(cmd.c_str());
+    }
+    cout << "EMC PLAYER => Trac count : " << std::to_string(trackCount) <<
+	    " Random number : " << std::to_string(randNum) <<
+	    " Next slot : " << std::to_string(nextSlot) <<
+	    " Selection : " << selection;
+}
+
 int main()
 {
-    int nextFile, currFile;
+    int nextFile, currFile = 0;
     nextFile = findNextFile( 0 );
     std::thread * thPtr = NULL;
     Player * currTrackPtr = NULL;
@@ -99,8 +171,13 @@ int main()
 	    thPtr = NULL;
 	    currTrackPtr = NULL;
 	}
+	else if ( clicks == 2 )
+	{
+	    cout << "EMC PLAYER => Selecting random track.." << endl;
+	    selectRandomTrack(currFile);
+	}
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
     
     }
 
