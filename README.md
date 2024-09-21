@@ -13,4 +13,4 @@ This project is to create a music player with little need for custom front ends.
 
 
 
-<p align="center" > This is a work in progress and not available for purchase. </p>
+<p align="center" > This is a work in progress and not intended for sale. </p>
