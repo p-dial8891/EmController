@@ -4,9 +4,18 @@
 #include <sys/stat.h>
 #include "mouse.h"
 #include <chrono>
-
+#include <random>
 
 namespace fs = std::filesystem;
+
+typedef std::mt19937 MyRNG_t;
+
+MyRNG_t rng;
+
+static void rand_intialise(void)
+{
+    rng.seed(rand());
+}
 
 static int findNextSlot( int start )
 {
@@ -79,7 +88,10 @@ static void selectRandomTrack( int currFile )
     }
 
     if ( trackCount != 0 )
-        randNum = rand()%(trackCount - 1);
+    {
+        std::uniform_int_distribution<uint32_t> uint_dist(0,trackCount);
+	randNum = uint_dist(rng);
+    }
     else
 	randNum = 0;
 
@@ -98,8 +110,10 @@ static void selectRandomTrack( int currFile )
 
     if ( ( currFile >= 0 ) && ( selection != "" ) && ( nextSlot != -1 ) )
     {
+        char temp[3] = {};
+	sprintf(temp, "%02d", nextSlot);
         cout << "EMC PLAYER => Next track selected : " << selection << endl;
-        string cmd = ( "ln -s \"" + selection + "\" " + std::to_string(nextSlot) );
+        string cmd = ( "ln -s \"" + selection + "\" " + std::string(temp) );
 	system(cmd.c_str());
     }
     cout << "EMC PLAYER => Trac count : " << std::to_string(trackCount) <<
@@ -140,12 +154,18 @@ int main()
 	    else if ( ( thPtr != NULL ) && ( currTrackPtr != NULL ) &&
                 !currTrackPtr->isTrackRunning() )
 	    {
+		char temp[3];
+
 	        cout << "EMC PLAYER => Deleting current file." << endl;
 		//thPtr->~thread();
                 thPtr->detach();
 		delete(thPtr);
 		delete(currTrackPtr);
 
+		sprintf(temp, "%02d", currFile);
+		string cmd = "rm " + std::string(temp);
+		system(cmd.c_str());
+		
 		thPtr = NULL;
 		currTrackPtr = NULL;
 	    }
@@ -162,12 +182,19 @@ int main()
 	if ( ( clicks == 1 ) && ( thPtr != NULL ) && ( currTrackPtr != NULL) &&
 	     currTrackPtr->isTrackRunning() )
 	{
+	    char temp[3];
+     
 	    cout << "EMC PLAYER => Skipping track." << endl;
             string s="pkill -f ffmpeg; pkill -f pacat;";
 	    system(s.c_str());
 	    thPtr->detach();
 	    delete(thPtr);
 	    delete(currTrackPtr);
+
+	    sprintf(temp, "%02d", currFile);
+	    string cmd = "rm " + std::string(temp);
+	    system(cmd.c_str());
+
 	    thPtr = NULL;
 	    currTrackPtr = NULL;
 	}
