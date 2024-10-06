@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <cstring>
+#include "config.h"
 
 extern "C" {
 
@@ -17,9 +18,14 @@ void Player::Play( void )
 {
         running = true;	
         cout << "EMC PLAYER => Playing file : " << filename << endl;
-	//system(strcat("mpg123 ",filename.c_str()));
+#ifdef USE_FFMPEG
+	string cmd = "ffplay -v 0 -nodisp -autoexit " + filename;
+#elif defined(USE_MPG123)
+	string cmd = "mpg123 -q --no-control --no-visual " + filename;
+#elif defined(USE_PACAT)
 	string cmd = "ffmpeg -loglevel fatal -i " + filename + " -f wav - | " + \
 		" pacat --device=bluez_sink.F4_78_F3_96_0C_CD.a2dp_sink";
+#endif
 	cout << "EMC PLAYER => Command : " << cmd.c_str() << endl;
 	system(cmd.c_str());
 	running = false;

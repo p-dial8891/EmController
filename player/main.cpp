@@ -5,16 +5,25 @@
 #include "mouse.h"
 #include <chrono>
 #include <random>
+#include <stdio.h>
+#include "config.h"
 
 namespace fs = std::filesystem;
+
+char * ticker[] = { "-", "\\", "|", "/"};
 
 typedef std::mt19937 MyRNG_t;
 
 MyRNG_t rng;
 
-static void rand_intialise(void)
+static void rand_initialise(void)
 {
-    rng.seed(rand());
+    FILE * fp = fopen("/dev/urandom", "rb");
+    unsigned int randNo = 0;
+    fread(&randNo, 1, 4, fp);
+    rng.seed(randNo);
+    cout << "EMC PLAYER => Random number is " << randNo << endl;
+    fclose(fp);
 }
 
 static int findNextSlot( int start )
@@ -129,7 +138,10 @@ int main()
     std::thread * thPtr = NULL;
     Player * currTrackPtr = NULL;
 
+    static int tick = 0;
+
     mouse_initialise();
+    rand_initialise();
 
     while(1)
     {	
@@ -185,7 +197,13 @@ int main()
 	    char temp[3];
      
 	    cout << "EMC PLAYER => Skipping track." << endl;
+#ifdef USE_FFMPEG
+            string s="pkill -f ffplay;";
+#elif defined(USE_MPG123)
+            string s="pkill -f mpg123;";
+#elif defined(USE_PACAT)
             string s="pkill -f ffmpeg; pkill -f pacat;";
+#endif
 	    system(s.c_str());
 	    thPtr->detach();
 	    delete(thPtr);
@@ -205,7 +223,9 @@ int main()
 	}
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    
+
+	cout<<"\b"<<ticker[tick/10];
+        tick = ( tick + 1 ) % 40;	
     }
 
     mouse_cleanup();
