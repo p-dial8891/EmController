@@ -7,6 +7,7 @@
 #include <random>
 #include <stdio.h>
 #include "config.h"
+#include <signal.h>
 
 namespace fs = std::filesystem;
 
@@ -131,7 +132,14 @@ static void selectRandomTrack( int currFile )
 	    " Selection : " << selection;
 }
 
-int main()
+void Handler ( int sigNo )
+{
+    cout << "EMC PLAYER => Exiting player ..." << endl;
+    mouse_cleanup();
+    exit(0);
+}
+
+int main( int argc, char * argv[] )
 {
     int nextFile, currFile = 0;
     nextFile = findNextFile( 0 );
@@ -140,7 +148,8 @@ int main()
 
     static int tick = 0;
 
-    mouse_initialise();
+    signal(SIGINT, Handler);
+    mouse_initialise ( argv[1] );
     rand_initialise();
 
     while(1)
