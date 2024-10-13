@@ -1,4 +1,4 @@
-<h1 align="center">Jukebox Em</h1>
+<h1 align="center">Jukebox ΣM</h1>
 
 <p>
 This project is to create a music player with little need for custom front ends. Maximum compatibility is the goal. Inspired by track selection and playlist enqueueing features of past software like Winamp, one-click random track selection and skipping have been implemented so far.
