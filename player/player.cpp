@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstring>
 #include "config.h"
+#include <unistd.h>
 
 extern "C" {
 
@@ -19,7 +20,7 @@ void Player::Play( void )
         running = true;	
         cout << "EMC PLAYER => Playing file : " << filename << endl;
 #ifdef USE_FFMPEG
-	string cmd = "ffplay -v 0 -nodisp -autoexit " + filename;
+	string cmd = "../player/play.out " + filename;
 #elif defined(USE_MPG123)
 	string cmd = "mpg123 -q --no-control --no-visual " + filename;
 #elif defined(USE_PACAT)
@@ -28,6 +29,7 @@ void Player::Play( void )
 #endif
 	cout << "EMC PLAYER => Command : " << cmd.c_str() << endl;
 	system(cmd.c_str());
+	//execlp(cmd, filename.c_str(), NULL);
 	running = false;
 }
 

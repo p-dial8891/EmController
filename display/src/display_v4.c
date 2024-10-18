@@ -32,6 +32,34 @@
 #include "EPD_2in13_V4.h"
 #include <time.h> 
 
+#define _XOPEN_SOURCE 700
+#include <stdio.h>
+#include <sys/types.h>
+#include <dirent.h>
+
+static int countTracks ( char * output )
+{
+  DIR *dp;
+  struct dirent *ep; 
+  int count = 0;  
+  dp = opendir ("./");
+  if (dp != NULL)
+  {
+    while ((ep = readdir (dp)) != NULL)
+      //puts (ep->d_name);
+      count++;
+          
+    (void) closedir (dp);
+    sprintf( output, "%d", count - 2 );
+    return 0;
+  }
+  else
+  {
+    perror ("Couldn't open the directory");
+    return -1;
+  }
+}
+
 int EPD_2in13_V4_test(void)
 {
 
@@ -72,7 +100,9 @@ int EPD_2in13_V4_test(void)
 #if 1 
     Debug("Drawing display.\r\n");
     Paint_SelectImage(BlackImage);
-    Paint_DrawString_EN(140, 15, "Jukebox", &Font16, BLACK, WHITE);
+    char fileCount[3] = {};
+    countTracks( fileCount );
+    Paint_DrawString_EN(180, 15, fileCount, &Font16, WHITE, BLACK);
     EPD_2in13_V4_Display_Fast(BlackImage);
     DEV_Delay_ms(10000);
 #endif

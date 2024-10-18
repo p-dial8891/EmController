@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "config.h"
 #include <signal.h>
+#include <dirent.h>
 
 namespace fs = std::filesystem;
 
@@ -16,6 +17,29 @@ char * ticker[] = { "-", "\\", "|", "/"};
 typedef std::mt19937 MyRNG_t;
 
 MyRNG_t rng;
+
+static void read_directory(const std::string& name, int rand, char * buffer)
+{
+    int count = 0;
+    DIR* dirp = opendir(name.c_str());
+    struct dirent * dp;
+    while ((dp = readdir(dirp)) != NULL) {
+        if ( ( strcmp(dp->d_name[strlen(dp->d_name) - 4],"mp3" ) == 0 ) ||
+             ( strcmp(dp->d_name[strlen(dp->d_name) - 4],"m4a" ) == 0 )
+	{
+	    count++;
+	    if ( count > rand )
+	    {
+	        strcpy(buffer,dp->d_name);
+		break;
+	    }
+	}
+    }
+
+    closedir(dirp);
+
+    return;
+}
 
 static void rand_initialise(void)
 {
@@ -91,12 +115,15 @@ static void selectRandomTrack( int currFile )
     int randNum = 0;
     string selection = "";
 
-    for (const fs::directory_entry& dir_entry :
+    cout << "EMC PLAYER => Counting files.." << endl;
+    /*for (const fs::directory_entry& dir_entry :
             fs::recursive_directory_iterator("../music"))
     {
         trackCount += 1;
-    }
+    }*/
+    trackCount = 229;
 
+    cout << "EMC PLAYER => Generating random number .." << endl;
     if ( trackCount != 0 )
     {
         std::uniform_int_distribution<uint32_t> uint_dist(0,trackCount);
@@ -105,6 +132,7 @@ static void selectRandomTrack( int currFile )
     else
 	randNum = 0;
 
+    cout << "EMC PLAYER => Selecting track .." << endl;
     for (const fs::directory_entry& dir_entry :
             fs::recursive_directory_iterator("../music"))
     {
@@ -118,7 +146,8 @@ static void selectRandomTrack( int currFile )
 
     int nextSlot = findNextSlot ( currFile );
 
-    if ( ( currFile >= 0 ) && ( selection != "" ) && ( nextSlot != -1 ) )
+    cout << "EMC PLAYER => next slot for random track is :" << nextSlot << endl;
+    if ( ( currFile >= -1 ) && ( selection != "" ) && ( nextSlot != -1 ) )
     {
         char temp[3] = {};
 	sprintf(temp, "%02d", nextSlot);
@@ -126,7 +155,7 @@ static void selectRandomTrack( int currFile )
         string cmd = ( "ln -s \"" + selection + "\" " + std::string(temp) );
 	system(cmd.c_str());
     }
-    cout << "EMC PLAYER => Trac count : " << std::to_string(trackCount) <<
+    cout << "EMC PLAYER => Track count : " << std::to_string(trackCount) <<
 	    " Random number : " << std::to_string(randNum) <<
 	    " Next slot : " << std::to_string(nextSlot) <<
 	    " Selection : " << selection;
@@ -146,7 +175,7 @@ int main( int argc, char * argv[] )
     std::thread * thPtr = NULL;
     Player * currTrackPtr = NULL;
 
-    static int tick = 0;
+    //static int tick = 0;
 
     signal(SIGINT, Handler);
     mouse_initialise ( argv[1] );
@@ -183,19 +212,25 @@ int main( int argc, char * argv[] )
 		delete(thPtr);
 		delete(currTrackPtr);
 
-		sprintf(temp, "%02d", currFile);
-		string cmd = "rm " + std::string(temp);
-		system(cmd.c_str());
+		if ( currFile >= 0 )
+		{
+		    sprintf(temp, "%02d", currFile);
+		    string cmd = "rm " + std::string(temp);
+		    system(cmd.c_str());
+		}
 		
 		thPtr = NULL;
 		currTrackPtr = NULL;
+
+		nextFile = findNextFile( currFile );
+		if ( nextFile < 0 ) currFile = -1;
 	    }
-	    else if ( ( thPtr != NULL ) && ( currTrackPtr != NULL ) &&
+	    /*else if ( ( thPtr != NULL ) && ( currTrackPtr != NULL ) &&
 	        currTrackPtr->isTrackRunning() )
 	    {
 	        //cout << "EMC PLAYER => Finding next file." << endl;
 		nextFile = findNextFile( currFile );
-	    }
+	    }*/
 	}
 	else
             nextFile = findNextFile( 0 );
@@ -218,23 +253,30 @@ int main( int argc, char * argv[] )
 	    delete(thPtr);
 	    delete(currTrackPtr);
 
-	    sprintf(temp, "%02d", currFile);
-	    string cmd = "rm " + std::string(temp);
-	    system(cmd.c_str());
+	    if ( currFile >= 0 )
+	    {
+	         sprintf(temp, "%02d", currFile);
+	         std::remove(temp);
+	    }
 
 	    thPtr = NULL;
 	    currTrackPtr = NULL;
+
+	    nextFile = findNextFile( currFile );
+	    if ( nextFile < 0 ) currFile = -1;
+
+	    cout << "EMC PLAYER => Skipped to file : " << nextFile << " from current file : " << currFile << endl;
 	}
 	else if ( clicks == 2 )
 	{
-	    cout << "EMC PLAYER => Selecting random track.." << endl;
+	    cout << "EMC PLAYER => Selecting random track.. current file : " << currFile << endl;
 	    selectRandomTrack(currFile);
 	}
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-	cout<<"\b"<<ticker[tick/10];
-        tick = ( tick + 1 ) % 40;	
+	//cout<<"\b"<<ticker[tick/10];
+        //tick = ( tick + 1 ) % 40;	
     }
 
     mouse_cleanup();
