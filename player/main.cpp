@@ -9,6 +9,7 @@
 #include "config.h"
 #include <signal.h>
 #include <dirent.h>
+#include <string.h>
 
 namespace fs = std::filesystem;
 
@@ -24,10 +25,11 @@ static void read_directory(const std::string& name, int rand, char * buffer)
     DIR* dirp = opendir(name.c_str());
     struct dirent * dp;
     while ((dp = readdir(dirp)) != NULL) {
-        if ( ( strcmp(dp->d_name[strlen(dp->d_name) - 4],"mp3" ) == 0 ) ||
-             ( strcmp(dp->d_name[strlen(dp->d_name) - 4],"m4a" ) == 0 )
+        count++;
+	//cout << "EMC PLATER => Track : " << dp->d_name << endl;
+        if ( ( strcmp(&dp->d_name[strlen(dp->d_name) - 3],"mp3" ) == 0 ) ||
+             ( strcmp(&dp->d_name[strlen(dp->d_name) - 3],"m4a" ) == 0 ) )
 	{
-	    count++;
 	    if ( count > rand )
 	    {
 	        strcpy(buffer,dp->d_name);
@@ -113,7 +115,7 @@ static void selectRandomTrack( int currFile )
     int trackCount = 0;
     int index = 0;
     int randNum = 0;
-    string selection = "";
+    char selection[256] = {};
 
     cout << "EMC PLAYER => Counting files.." << endl;
     /*for (const fs::directory_entry& dir_entry :
@@ -133,26 +135,17 @@ static void selectRandomTrack( int currFile )
 	randNum = 0;
 
     cout << "EMC PLAYER => Selecting track .." << endl;
-    for (const fs::directory_entry& dir_entry :
-            fs::recursive_directory_iterator("../music"))
-    {
-        if ( !dir_entry.is_directory() && index >= randNum )
-	{
-            selection = dir_entry.path().string();
-	    break;
-	}
-	index++;
-    }
+    read_directory( "../music", randNum, selection);
 
     int nextSlot = findNextSlot ( currFile );
 
     cout << "EMC PLAYER => next slot for random track is :" << nextSlot << endl;
-    if ( ( currFile >= -1 ) && ( selection != "" ) && ( nextSlot != -1 ) )
+    if ( ( currFile >= -1 ) && ( strcmp(selection,"") ) && ( nextSlot != -1 ) )
     {
         char temp[3] = {};
 	sprintf(temp, "%02d", nextSlot);
         cout << "EMC PLAYER => Next track selected : " << selection << endl;
-        string cmd = ( "ln -s \"" + selection + "\" " + std::string(temp) );
+        string cmd = ( "ln -s \"" + std::string("../music/") + std::string(selection) + "\" " + std::string(temp) );
 	system(cmd.c_str());
     }
     cout << "EMC PLAYER => Track count : " << std::to_string(trackCount) <<
@@ -242,7 +235,7 @@ int main( int argc, char * argv[] )
      
 	    cout << "EMC PLAYER => Skipping track." << endl;
 #ifdef USE_FFMPEG
-            string s="pkill -f ffplay;";
+            string s="pkill -SIGINT -f ffplay;";
 #elif defined(USE_MPG123)
             string s="pkill -f mpg123;";
 #elif defined(USE_PACAT)
@@ -256,7 +249,8 @@ int main( int argc, char * argv[] )
 	    if ( currFile >= 0 )
 	    {
 	         sprintf(temp, "%02d", currFile);
-	         std::remove(temp);
+	         string cmd = "rm " + std::string(temp);
+		 system(cmd.c_str());
 	    }
 
 	    thPtr = NULL;
