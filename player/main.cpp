@@ -10,6 +10,9 @@
 #include <signal.h>
 #include <dirent.h>
 #include <string.h>
+#include <vector>
+
+using namespace std;
 
 namespace fs = std::filesystem;
 
@@ -19,26 +22,52 @@ typedef std::mt19937 MyRNG_t;
 
 MyRNG_t rng;
 
-static void read_directory(const std::string& name, int rand, char * buffer)
+static void read_directory(const std::string& name, vector<string>& v )
 {
     int count = 0;
     DIR* dirp = opendir(name.c_str());
     struct dirent * dp;
+    struct stat sb;
     while ((dp = readdir(dirp)) != NULL) {
-        count++;
-	//cout << "EMC PLATER => Track : " << dp->d_name << endl;
-        if ( ( strcmp(&dp->d_name[strlen(dp->d_name) - 3],"mp3" ) == 0 ) ||
-             ( strcmp(&dp->d_name[strlen(dp->d_name) - 3],"m4a" ) == 0 ) )
+        string fullPath = name + "/" + dp->d_name;
+        if ( ( ( std::string(dp->d_name) != "." )  &&
+               ( std::string(dp->d_name) != ".." ) ) &&
+	     ( ( stat(fullPath.c_str(), &sb) == 0 ) && S_ISDIR(sb.st_mode) ) )
 	{
-	    if ( count > rand )
-	    {
-	        strcpy(buffer,dp->d_name);
-		break;
-	    }
+            read_directory(name + "/" + std::string(dp->d_name), v);
+	}
+	else if ( ( std::string(dp->d_name) != "." ) &&
+                  ( std::string(dp->d_name) != ".." ) )	
+        {
+            v.push_back(fullPath);
 	}
     }
 
     closedir(dirp);
+
+    return;
+}
+
+
+static void find_selection(const std::string& name, int rand, char * buffer)
+{
+    int count = 0;
+    vector<string> v;
+    read_directory( name, v );
+    for ( string s : v )
+    {
+        count++;
+        cout << "EMC PLATER => Track : " << s << endl;
+        if ( ( s.substr(s.length() - 3, 3) == "mp3" ) ||
+             ( s.substr(s.length() - 3, 3) == "m4a" ) )
+	{
+	    if ( count > rand )
+	    {
+	        strcpy(buffer,s.c_str());
+		break;
+	    }
+	}
+    }
 
     return;
 }
@@ -116,16 +145,14 @@ static void selectRandomTrack( int currFile )
     int index = 0;
     int randNum = 0;
     char selection[256] = {};
+    vector<string> v;
 
     cout << "EMC PLAYER => Counting files.." << endl;
-    /*for (const fs::directory_entry& dir_entry :
-            fs::recursive_directory_iterator("../music"))
-    {
-        trackCount += 1;
-    }*/
-    trackCount = 229;
+    read_directory( "../music", v );
+    trackCount = v.size();
 
     cout << "EMC PLAYER => Generating random number .." << endl;
+    if ( trackCount != 0 )
     if ( trackCount != 0 )
     {
         std::uniform_int_distribution<uint32_t> uint_dist(0,trackCount);
@@ -135,7 +162,7 @@ static void selectRandomTrack( int currFile )
 	randNum = 0;
 
     cout << "EMC PLAYER => Selecting track .." << endl;
-    read_directory( "../music", randNum, selection);
+    find_selection( "../music", randNum, selection);
 
     int nextSlot = findNextSlot ( currFile );
 
@@ -145,7 +172,7 @@ static void selectRandomTrack( int currFile )
         char temp[3] = {};
 	sprintf(temp, "%02d", nextSlot);
         cout << "EMC PLAYER => Next track selected : " << selection << endl;
-        string cmd = ( "ln -s \"" + std::string("../music/") + std::string(selection) + "\" " + std::string(temp) );
+        string cmd = ( "ln -s \"" + std::string(selection) + "\" " + std::string(temp) );
 	system(cmd.c_str());
     }
     cout << "EMC PLAYER => Track count : " << std::to_string(trackCount) <<
@@ -276,4 +303,3 @@ int main( int argc, char * argv[] )
     mouse_cleanup();
 
 }
-

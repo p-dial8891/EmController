@@ -36,6 +36,24 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <termios.h>
+
+static int getch (void)
+{
+        int ch;
+        struct termios oldt, newt;
+
+//        tcgetattr(STDIN_FILENO, &oldt);
+//        newt = oldt;
+//        newt.c_lflag &= ~(ICANON|ECHO);
+//        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+        ch = getchar();
+//        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+        return ch;
+}
 
 static int countTracks ( char * output )
 {
@@ -51,7 +69,7 @@ static int countTracks ( char * output )
           
     (void) closedir (dp);
     sprintf( output, "%d", count - 2 );
-    return 0;
+    return count;
   }
   else
   {
@@ -101,9 +119,20 @@ int EPD_2in13_V4_test(void)
     Debug("Drawing display.\r\n");
     Paint_SelectImage(BlackImage);
     char fileCount[3] = {};
-    countTracks( fileCount );
-    Paint_DrawString_EN(180, 15, fileCount, &Font16, WHITE, BLACK);
-    EPD_2in13_V4_Display_Fast(BlackImage);
+    int fileCountInt, oldFileCountInt = -1;
+    while  ( getch() != 'q' )
+    {
+        fileCountInt = countTracks( fileCount );
+	if ( oldFileCountInt != fileCountInt )
+	{
+            Paint_ClearWindows(150, 80, 150 + Font20.Width * 7, 80 + Font20.Height, WHITE);
+            Paint_DrawString_EN(150, 80, fileCount, &Font20, WHITE, BLACK);
+            EPD_2in13_V4_Display_Partial(BlackImage);
+	}
+	oldFileCountInt = fileCountInt;
+	sleep(1);
+    }
+    //EPD_2in13_V4_Display_Fast(BlackImage);
     DEV_Delay_ms(10000);
 #endif
 
