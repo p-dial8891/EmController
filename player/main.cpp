@@ -6,7 +6,7 @@
 #include <chrono>
 #include <random>
 #include <stdio.h>
-#include "config.h"
+#include "../config/config.h"
 #include <signal.h>
 #include <dirent.h>
 #include <string.h>
@@ -153,7 +153,6 @@ static void selectRandomTrack( int currFile )
 
     cout << "EMC PLAYER => Generating random number .." << endl;
     if ( trackCount != 0 )
-    if ( trackCount != 0 )
     {
         std::uniform_int_distribution<uint32_t> uint_dist(0,trackCount);
 	randNum = uint_dist(rng);
@@ -169,10 +168,12 @@ static void selectRandomTrack( int currFile )
     cout << "EMC PLAYER => next slot for random track is :" << nextSlot << endl;
     if ( ( currFile >= -1 ) && ( strcmp(selection,"") ) && ( nextSlot != -1 ) )
     {
+	int a;
         char temp[3] = {};
 	sprintf(temp, "%02d", nextSlot);
         cout << "EMC PLAYER => Next track selected : " << selection << endl;
         string cmd = ( "ln -s \"" + std::string(selection) + "\" " + std::string(temp) );
+	cin>>a;
 	system(cmd.c_str());
     }
     cout << "EMC PLAYER => Track count : " << std::to_string(trackCount) <<

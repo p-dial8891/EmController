@@ -108,7 +108,7 @@ int main ( int argc, char * argv[] )
 
     int err;
     struct stat buffer;
-    mouse_initialise("/dev/input/by-id/usb-ZEPHYR_Zephyr_HID_mouse_sample_2735883958566D65-event-mouse");
+    mouse_initialise("/dev/input/event8");
 
     devPlayer = libevdev_new();
     libevdev_set_name(devPlayer, "toPlayer");

@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <iostream>
 #include <cstring>
-#include "config.h"
+#include "../config/config.h"
 #include <unistd.h>
 
 extern "C" {
