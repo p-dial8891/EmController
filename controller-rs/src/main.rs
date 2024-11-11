@@ -1,6 +1,7 @@
 use evdev::InputEventKind::Key;
 use evdev::AttributeSetRef;
 use evdev::{uinput::VirtualDeviceBuilder, AttributeSet};
+use std::io::{self, BufRead};
 
 fn main() {
     println!("Hello, world!");
@@ -17,6 +18,16 @@ fn main() {
         .build()
         .unwrap();
 
+    let stdin = io::stdin();
+    let mut iter = stdin.lock().lines();
+    let line1 = iter.next().unwrap().unwrap();
+
+    let i = &[evdev::InputEvent::new(
+                evdev::EventType::KEY, evdev::Key::BTN_LEFT.code(), 1),
+              evdev::InputEvent::new(
+                evdev::EventType::KEY, evdev::Key::BTN_LEFT.code(), 0)];
+    let _ = toPlayer.emit(i);
+              
     loop {
         for e in s.fetch_events().unwrap() {
             if let Key(k) = e.kind() {
