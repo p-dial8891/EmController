@@ -22,7 +22,7 @@ typedef std::mt19937 MyRNG_t;
 
 MyRNG_t rng;
 
-static void read_directory(const std::string& name, vector<string>& v )
+static void read_directory(const std::string name, vector<string>& v )
 {
     int count = 0;
     DIR* dirp = opendir(name.c_str());
@@ -30,15 +30,18 @@ static void read_directory(const std::string& name, vector<string>& v )
     struct stat sb;
     while ((dp = readdir(dirp)) != NULL) {
         string fullPath = name + "/" + dp->d_name;
+	//cout << "EMC PLAYER => Fullpath : " << fullPath << endl;
         if ( ( ( std::string(dp->d_name) != "." )  &&
                ( std::string(dp->d_name) != ".." ) ) &&
 	     ( ( stat(fullPath.c_str(), &sb) == 0 ) && S_ISDIR(sb.st_mode) ) )
 	{
-            read_directory(name + "/" + std::string(dp->d_name), v);
+            cout << "EMC PLAYER => Entering directory : " << fullPath << endl;
+	    read_directory(fullPath, v);
 	}
 	else if ( ( std::string(dp->d_name) != "." ) &&
                   ( std::string(dp->d_name) != ".." ) )	
         {
+	    cout << "EMC PLAYER => Adding fullpath : " << fullPath << endl;
             v.push_back(fullPath);
 	}
     }
@@ -49,7 +52,7 @@ static void read_directory(const std::string& name, vector<string>& v )
 }
 
 
-static void find_selection(const std::string& name, int rand, char * buffer)
+static void find_selection(const std::string name, int rand, char * buffer)
 {
     int count = 0;
     vector<string> v;
@@ -57,7 +60,7 @@ static void find_selection(const std::string& name, int rand, char * buffer)
     for ( string s : v )
     {
         count++;
-        cout << "EMC PLATER => Track : " << s << endl;
+        //cout << "EMC PLATER => Track : " << s << endl;
         if ( ( s.substr(s.length() - 3, 3) == "mp3" ) ||
              ( s.substr(s.length() - 3, 3) == "m4a" ) )
 	{
@@ -69,6 +72,7 @@ static void find_selection(const std::string& name, int rand, char * buffer)
 	}
     }
 
+    v.clear();
     return;
 }
 
@@ -148,7 +152,7 @@ static void selectRandomTrack( int currFile )
     vector<string> v;
 
     cout << "EMC PLAYER => Counting files.." << endl;
-    read_directory( "../music", v );
+    read_directory( std::string("../music") , v );
     trackCount = v.size();
 
     cout << "EMC PLAYER => Generating random number .." << endl;
@@ -179,6 +183,8 @@ static void selectRandomTrack( int currFile )
 	    " Random number : " << std::to_string(randNum) <<
 	    " Next slot : " << std::to_string(nextSlot) <<
 	    " Selection : " << selection;
+
+    v.clear();
 }
 
 void Handler ( int sigNo )
@@ -264,13 +270,15 @@ int main( int argc, char * argv[] )
 #ifdef USE_FFMPEG
             string s="pkill -SIGINT -f ffplay;";
 #elif defined(USE_MPG123)
-            string s="pkill -f mpg123;";
+            string s="pkill -SIGINT -f mpg123;";
 #elif defined(USE_PACAT)
-            string s="pkill -f ffmpeg; pkill -f pacat;";
+            string s="pkill -SIGINT -f ffmpeg; pkill -SIGINT -f pacat;";
 #endif
 	    system(s.c_str());
 	    thPtr->detach();
+	    thPtr->~thread();
 	    delete(thPtr);
+	    currTrackPtr->~Player();
 	    delete(currTrackPtr);
 
 	    if ( currFile >= 0 )

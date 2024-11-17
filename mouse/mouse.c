@@ -45,7 +45,7 @@ int mouse_process_events ( void )
     rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
 
     if (rc == 0) {
-	printf("EMC MOUSE => Event received.\n");
+	//printf("EMC MOUSE => Event received.\n");
         if (ev.type == EV_KEY && ev.code == BTN_LEFT && ev.value == 1)
 	{	
       	    return 1;
