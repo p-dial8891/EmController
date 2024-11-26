@@ -60,7 +60,7 @@ static int mouse_process_events ( void )
     dCurTime = current_time.tv_sec + ( current_time.tv_usec / 1000000.0 );
 
     if (rc == 0) {
-        if (ev.type == EV_KEY && ev.code == BTN_LEFT && ev.value == 1) { // Button press
+        if (ev.type == EV_KEY && ev.code == BTN_EAST && ev.value == 1) { // Button press
 
             click_count++;
             if (click_count == 3)
@@ -108,7 +108,7 @@ int main ( int argc, char * argv[] )
 
     int err;
     struct stat buffer;
-    mouse_initialise("/dev/input/event8");
+    mouse_initialise("/dev/input/by-id/usb-Microsoft_Inc._WX4_controller-event-joystick");
 
     devPlayer = libevdev_new();
     libevdev_set_name(devPlayer, "toPlayer");
