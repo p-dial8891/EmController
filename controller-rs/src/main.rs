@@ -5,6 +5,7 @@ use std::io::{self, BufRead};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
+use std::process::Command;
 
 fn main() {
     println!("Hello, world!");
@@ -21,15 +22,22 @@ fn main() {
         .build()
         .unwrap();
 
-    let stdin = io::stdin();
-    let mut iter = stdin.lock().lines();
-    let line1 = iter.next().unwrap().unwrap();
-
+    let dev = toPlayer.enumerate_dev_nodes_blocking().unwrap().next().unwrap().unwrap();
+    let devString = dev.display();
+    println!("Device created : {devString}");
+    let cmd = Command::new("../../../player/player.out")
+              .current_dir("/home/philip/Projects/EmController/controller-rs/target/debug")
+              .arg(dev.to_str().unwrap())
+              .spawn()
+              .expect("Failed to start player.");
+/*
     let i = &[evdev::InputEvent::new(
                 evdev::EventType::KEY, evdev::Key::BTN_LEFT.code(), 1),
               evdev::InputEvent::new(
                 evdev::EventType::KEY, evdev::Key::BTN_LEFT.code(), 0)];
     let _ = toPlayer.emit(i);
+*/
+    println!("Starting thread.");
 
     let (tx, rx) = mpsc::channel();
 
