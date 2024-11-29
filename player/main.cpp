@@ -11,6 +11,8 @@
 #include <dirent.h>
 #include <string.h>
 #include <vector>
+#include <sys/wait.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -35,13 +37,13 @@ static void read_directory(const std::string name, vector<string>& v )
                ( std::string(dp->d_name) != ".." ) ) &&
 	     ( ( stat(fullPath.c_str(), &sb) == 0 ) && S_ISDIR(sb.st_mode) ) )
 	{
-            cout << "EMC PLAYER => Entering directory : " << fullPath << endl;
+            //cout << "EMC PLAYER => Entering directory : " << fullPath << endl;
 	    read_directory(fullPath, v);
 	}
 	else if ( ( std::string(dp->d_name) != "." ) &&
                   ( std::string(dp->d_name) != ".." ) )	
         {
-	    cout << "EMC PLAYER => Adding fullpath : " << fullPath << endl;
+	    //cout << "EMC PLAYER => Adding fullpath : " << fullPath << endl;
             v.push_back(fullPath);
 	}
     }
@@ -172,12 +174,10 @@ static void selectRandomTrack( int currFile )
     cout << "EMC PLAYER => next slot for random track is :" << nextSlot << endl;
     if ( ( currFile >= -1 ) && ( strcmp(selection,"") ) && ( nextSlot != -1 ) )
     {
-	int a;
         char temp[3] = {};
 	sprintf(temp, "%02d", nextSlot);
         cout << "EMC PLAYER => Next track selected : " << selection << endl;
         string cmd = ( "ln -s \"" + std::string(selection) + "\" " + std::string(temp) );
-	cin>>a;
 	system(cmd.c_str());
     }
     cout << "EMC PLAYER => Track count : " << std::to_string(trackCount) <<
@@ -186,6 +186,27 @@ static void selectRandomTrack( int currFile )
 	    " Selection : " << selection;
 
     v.clear();
+}
+
+static bool checkPlayerIsRunning ( string &playerPid )
+{
+    DIR* dirp = opendir("../var");
+    struct dirent * dp;
+    struct stat sb;
+    while ( (dp = readdir(dirp)) != NULL ) {
+        string fn = std::string(dp->d_name);
+	//cout << "EMC PLAYER => Directory file : '" << fn << "'" <<  endl;
+	if ( !(fn == ".") && !(fn == "..") )
+	{
+	    playerPid = fn;
+            closedir(dirp);
+	    //cout << "EMC PLAYER =>  pid found." << endl;
+	    return true;
+	}
+    }
+    closedir(dirp);
+    //cout << "EMC PLAYER : pid not found" << endl;
+    return false;
 }
 
 void Handler ( int sigNo )
@@ -199,10 +220,7 @@ int main( int argc, char * argv[] )
 {
     int nextFile, currFile = 0;
     nextFile = findNextFile( 0 );
-    std::thread * thPtr = NULL;
-    Player * currTrackPtr = NULL;
-
-    //static int tick = 0;
+    string pid = "";
 
     signal(SIGINT, Handler);
     cerr << "EMC PLAYER => Device name :" << argv[1] << endl;
@@ -219,69 +237,43 @@ int main( int argc, char * argv[] )
             char temp[3] = {};
             sprintf(temp, "%02d", nextFile );	    
 	    //cout << "EMC PLAYER => New File found : " << nextFile << endl;
-	    //Player track = Player(std::string(temp));
-	    //track.Play();
-	    if ( ( thPtr == NULL ) && ( currTrackPtr == NULL ) )
+	    if ( !checkPlayerIsRunning(pid) ) 
 	    {
 		cout << "EMC PLAYER => Starting new file : " + nextFile <<
 		endl;
 		currFile = nextFile;
-		currTrackPtr = new Player(std::string(temp));
-                thPtr = new std::thread(&Player::Play, currTrackPtr);
-	    }
-	    else if ( ( thPtr != NULL ) && ( currTrackPtr != NULL ) &&
-                !currTrackPtr->isTrackRunning() )
-	    {
-		char temp[3];
-
-	        cout << "EMC PLAYER => Deleting current file." << endl;
-		//thPtr->~thread();
-                thPtr->detach();
-		delete(thPtr);
-		delete(currTrackPtr);
-
-		if ( currFile >= 0 )
+		string cmd = "../player/play.out " + std::string(temp);
+		system(cmd.c_str());
+		cout << "EMC PLAYER => Cleaning up after track..." << endl;
+		if ( checkPlayerIsRunning(pid) )
 		{
-		    sprintf(temp, "%02d", currFile);
-		    string cmd = "rm " + std::string(temp);
-		    system(cmd.c_str());
+		    string cleanupCmd = "rm -f ../var/" + pid + ";";
+		    cout << "EMC PLAYER => Deleting pid ..." << pid << endl;
+		    system(cleanupCmd.c_str());
 		}
-		
-		thPtr = NULL;
-		currTrackPtr = NULL;
-
-		nextFile = findNextFile( currFile );
+		else
+		    cout << "EMC PLAYER => Pid not found" << endl;
+		std::remove(temp);
+		nextFile = findNextFile(currFile);
 		if ( nextFile < 0 ) currFile = -1;
 	    }
-	    /*else if ( ( thPtr != NULL ) && ( currTrackPtr != NULL ) &&
-	        currTrackPtr->isTrackRunning() )
-	    {
-	        //cout << "EMC PLAYER => Finding next file." << endl;
-		nextFile = findNextFile( currFile );
-	    }*/
 	}
 	else
             nextFile = findNextFile( 0 );
 
-	if ( ( clicks == 1 ) && ( thPtr != NULL ) && ( currTrackPtr != NULL) &&
-	     currTrackPtr->isTrackRunning() )
+	if ( ( clicks == 1 ) /*&& checkPlayerIsRunning(pid)*/ )
 	{
 	    char temp[3];
      
 	    cout << "EMC PLAYER => Skipping track." << endl;
 #ifdef USE_FFMPEG
-            string s="pkill -SIGINT -f ffplay;";
+            string s="kill -SIGINT " + pid + ";";
 #elif defined(USE_MPG123)
             string s="pkill -SIGINT -f mpg123;";
 #elif defined(USE_PACAT)
             string s="pkill -SIGINT -f ffmpeg; pkill -SIGINT -f pacat;";
 #endif
 	    system(s.c_str());
-	    thPtr->detach();
-	    thPtr->~thread();
-	    delete(thPtr);
-	    currTrackPtr->~Player();
-	    delete(currTrackPtr);
 
 	    if ( currFile >= 0 )
 	    {
@@ -289,9 +281,6 @@ int main( int argc, char * argv[] )
 	         string cmd = "rm " + std::string(temp);
 		 system(cmd.c_str());
 	    }
-
-	    thPtr = NULL;
-	    currTrackPtr = NULL;
 
 	    nextFile = findNextFile( currFile );
 	    if ( nextFile < 0 ) currFile = -1;
@@ -306,8 +295,6 @@ int main( int argc, char * argv[] )
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-	//cout<<"\b"<<ticker[tick/10];
-        //tick = ( tick + 1 ) % 40;	
     }
 
     mouse_cleanup();

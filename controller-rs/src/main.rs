@@ -11,7 +11,7 @@ fn main() {
     println!("Hello, world!");
 
     //let d = evdev::Device::open( std::path::Path::new("/dev/input/by-id/usb-ZEPHYR_Zephyr_HID_mouse_sample_2735883958566D65-event-mouse") );
-    let d = evdev::Device::open( "/dev/input/by-id/usb-ZEPHYR_Zephyr_HID_mouse_sample_2735883958566D65-event-mouse" );
+    let d = evdev::Device::open( "/dev/input/by-id/usb-Microsoft_Inc._WX4_controller-event-joystick" );
     let mut s = d.unwrap();
     println!("{s}");
     let mut toPlayer = VirtualDeviceBuilder::new().unwrap()
@@ -25,8 +25,8 @@ fn main() {
     let dev = toPlayer.enumerate_dev_nodes_blocking().unwrap().next().unwrap().unwrap();
     let devString = dev.display();
     println!("Device created : {devString}");
-    let cmd = Command::new("../../../player/player.out")
-              .current_dir("/home/philip/Projects/EmController/controller-rs/target/debug")
+    let cmd = Command::new("/home/Developer/EmController/player/player.out")
+              .current_dir("/home/Developer/EmController/playlist")
               .arg(dev.to_str().unwrap())
               .spawn()
               .expect("Failed to start player.");
@@ -80,7 +80,7 @@ fn main() {
     loop {
         for e in s.fetch_events().unwrap() {
             if let Key(k) = e.kind() {
-                if k == evdev::Key::BTN_LEFT {
+                if k == evdev::Key::BTN_EAST {
                     let v = e.value();
                     //println!("Value is {v}");
                     if ( v == 1 ) { tx.send(()).unwrap(); }

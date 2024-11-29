@@ -1,5 +1,8 @@
 #include <string>
+#include <stdio.h>
 #include <unistd.h>
+
+using namespace std;
 
 int main ( int argc , char * argv[] ) 
 {
@@ -17,8 +20,13 @@ int main ( int argc , char * argv[] )
     //   exit(1);
     //}
     //execl("ffplay", "ffplay", "-v", "0", "-nodisp", "-autoexit", argv[1]);
+    pid_t pid = getpid();
+    string pidStr = std::to_string(pid);
+    string filename = "../var/" + pidStr;
+    FILE * fp = fopen(filename.c_str(),"w");
+    fclose(fp);
     if ( execl("/usr/bin/ffplay", "ffplay", "-v", "0",  "-nodisp", "-autoexit", argv[1], NULL) )
         perror("EMC PLAY => ffplay failed.");
-
-    return 0;
+   std::remove(filename.c_str()); 
+   return 0;
 }
