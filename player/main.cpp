@@ -223,6 +223,7 @@ int main( int argc, char * argv[] )
     string pid = "";
 
     signal(SIGINT, Handler);
+    cerr << "EMC PLAYER => Device name :" << argv[1] << endl;
     mouse_initialise ( argv[1] );
     rand_initialise();
 
