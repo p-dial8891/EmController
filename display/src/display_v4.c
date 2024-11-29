@@ -1,32 +1,3 @@
-/*****************************************************************************
-* | File      	:   EPD_2in13_V4_test.c
-* | Author      :   Waveshare team
-* | Function    :   2.13inch e-paper V4 test demo
-* | Info        :
-*----------------
-* |	This version:   V1.0
-* | Date        :   2023-6-25
-* | Info        :
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documnetation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to  whom the Software is
-# furished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS OR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-#
-******************************************************************************/
 #define _DEFAULT_SOURCE 1
 #include "EPD_Test.h"
 #include "EPD_2in13_V4.h"
@@ -134,66 +105,6 @@ int EPD_2in13_V4_test(void)
     }
     //EPD_2in13_V4_Display_Fast(BlackImage);
     DEV_Delay_ms(10000);
-#endif
-
-#if 0   // show bmp
-	Paint_NewImage(BlackImage, EPD_2in13_V4_WIDTH, EPD_2in13_V4_HEIGHT, 90, WHITE);
-    Debug("show window BMP-----------------\r\n");
-    Paint_SelectImage(BlackImage);
-    GUI_ReadBmp("./pic/100x100.bmp", 10, 10);
-    EPD_2in13_V4_Display(BlackImage);
-    DEV_Delay_ms(3000);
-
-    Debug("show bmp------------------------\r\n");
-    Paint_SelectImage(BlackImage);
-    GUI_ReadBmp("./pic/2in13_1.bmp", 0, 0);
-    EPD_2in13_V4_Display(BlackImage);
-    DEV_Delay_ms(3000);
-#endif
-
-#if 0   //show image for array    
-    Debug("show image for array\r\n");
-    EPD_2in13_V4_Init_Fast();
-    Paint_SelectImage(BlackImage);
-    Paint_Clear(WHITE);
-    Paint_DrawBitMap(gImage_2in13_2);
-
-    EPD_2in13_V4_Display_Fast(BlackImage);
-    DEV_Delay_ms(2000);
-#endif
-
-#if 0  // Drawing on the image
-	Paint_NewImage(BlackImage, EPD_2in13_V4_WIDTH, EPD_2in13_V4_HEIGHT, 90, WHITE);  	
-    Debug("Drawing\r\n");
-    //1.Select Image
-    EPD_2in13_V4_Init();
-    Paint_SelectImage(BlackImage);
-    Paint_Clear(WHITE);
-	
-    // 2.Drawing on the image
-    Paint_DrawPoint(5, 10, BLACK, DOT_PIXEL_1X1, DOT_STYLE_DFT);
-    Paint_DrawPoint(5, 25, BLACK, DOT_PIXEL_2X2, DOT_STYLE_DFT);
-    Paint_DrawPoint(5, 40, BLACK, DOT_PIXEL_3X3, DOT_STYLE_DFT);
-    Paint_DrawPoint(5, 55, BLACK, DOT_PIXEL_4X4, DOT_STYLE_DFT);
-
-    Paint_DrawLine(20, 10, 70, 60, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-    Paint_DrawLine(70, 10, 20, 60, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-    Paint_DrawRectangle(20, 10, 70, 60, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-    Paint_DrawRectangle(85, 10, 135, 60, BLACK, DOT_PIXEL_1X1, DRAW_FILL_FULL);
-
-    Paint_DrawLine(45, 15, 45, 55, BLACK, DOT_PIXEL_1X1, LINE_STYLE_DOTTED);
-    Paint_DrawLine(25, 35, 70, 35, BLACK, DOT_PIXEL_1X1, LINE_STYLE_DOTTED);
-    Paint_DrawCircle(45, 35, 20, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
-    Paint_DrawCircle(110, 35, 20, WHITE, DOT_PIXEL_1X1, DRAW_FILL_FULL);
-
-    Paint_DrawString_EN(140, 15, "waveshare", &Font16, BLACK, WHITE);
-    Paint_DrawNum(140, 40, 123456789, &Font16, BLACK, WHITE);
-
-    Paint_DrawString_CN(140, 60, "ÄãºÃabc", &Font12CN, BLACK, WHITE);
-    Paint_DrawString_CN(5, 65, "Î¢Ñ©µç×Ó", &Font24CN, WHITE, BLACK);
-
-    EPD_2in13_V4_Display_Base(BlackImage);
-    DEV_Delay_ms(3000);
 #endif
 
 #if 0   //Partial refresh, example shows time
